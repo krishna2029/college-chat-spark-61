@@ -1,22 +1,25 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, GraduationCap } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, GraduationCap, User, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
+    role: 'student' as 'student' | 'admin'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -42,12 +45,28 @@ export const Login = () => {
 
     // Simulate API call
     setTimeout(() => {
+      // Create user object
+      const user = {
+        id: '1',
+        name: formData.role === 'admin' ? 'Admin User' : 'Student User',
+        email: formData.email,
+        role: formData.role
+      };
+
+      login(user);
+      
       toast({
         title: "Login Successful",
-        description: "Welcome back to EduBot!",
+        description: `Welcome back, ${formData.role}!`,
       });
       setIsLoading(false);
-      navigate('/chatbot');
+      
+      // Redirect based on role
+      if (formData.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/chatbot');
+      }
     }, 1500);
   };
 
@@ -71,6 +90,36 @@ export const Login = () => {
           </CardHeader>
 
           <CardContent className="space-y-6">
+            {/* Role Toggle */}
+            <div className="flex p-1 bg-muted rounded-xl">
+              <Button
+                type="button"
+                variant={formData.role === 'student' ? 'default' : 'ghost'}
+                className={`flex-1 rounded-lg h-12 font-medium transition-all duration-200 ${
+                  formData.role === 'student' 
+                    ? 'bg-primary text-primary-foreground shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                onClick={() => setFormData({ ...formData, role: 'student' })}
+              >
+                <User className="h-4 w-4 mr-2" />
+                Student Login
+              </Button>
+              <Button
+                type="button"
+                variant={formData.role === 'admin' ? 'default' : 'ghost'}
+                className={`flex-1 rounded-lg h-12 font-medium transition-all duration-200 ${
+                  formData.role === 'admin' 
+                    ? 'bg-accent text-accent-foreground shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                onClick={() => setFormData({ ...formData, role: 'admin' })}
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                Admin Login
+              </Button>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">

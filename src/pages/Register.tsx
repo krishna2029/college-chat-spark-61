@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Eye, EyeOff, GraduationCap, UserCheck } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, GraduationCap, UserCheck, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const Register = () => {
   const [formData, setFormData] = useState({
@@ -15,13 +15,14 @@ export const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: ''
+    role: 'student' as 'student' | 'admin'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -30,10 +31,10 @@ export const Register = () => {
     });
   };
 
-  const handleRoleChange = (value: string) => {
+  const handleRoleChange = (role: 'student' | 'admin') => {
     setFormData({
       ...formData,
-      role: value
+      role: role
     });
   };
 
@@ -74,12 +75,28 @@ export const Register = () => {
 
     // Simulate API call
     setTimeout(() => {
+      // Create user object and log in immediately
+      const user = {
+        id: '1',
+        name: formData.name,
+        email: formData.email,
+        role: formData.role
+      };
+
+      login(user);
+      
       toast({
         title: "Registration Successful",
-        description: "Welcome to EduBot! Please sign in to continue.",
+        description: `Welcome to EduBot, ${formData.name}!`,
       });
       setIsLoading(false);
-      navigate('/login');
+      
+      // Redirect based on role
+      if (formData.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/chatbot');
+      }
     }, 1500);
   };
 
@@ -103,6 +120,36 @@ export const Register = () => {
           </CardHeader>
 
           <CardContent className="space-y-6">
+            {/* Role Toggle */}
+            <div className="flex p-1 bg-muted rounded-xl">
+              <Button
+                type="button"
+                variant={formData.role === 'student' ? 'default' : 'ghost'}
+                className={`flex-1 rounded-lg h-12 font-medium transition-all duration-200 ${
+                  formData.role === 'student' 
+                    ? 'bg-primary text-primary-foreground shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                onClick={() => handleRoleChange('student')}
+              >
+                <User className="h-4 w-4 mr-2" />
+                Student
+              </Button>
+              <Button
+                type="button"
+                variant={formData.role === 'admin' ? 'default' : 'ghost'}
+                className={`flex-1 rounded-lg h-12 font-medium transition-all duration-200 ${
+                  formData.role === 'admin' 
+                    ? 'bg-accent text-accent-foreground shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                onClick={() => handleRoleChange('admin')}
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                Admin
+              </Button>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-sm font-medium">
@@ -135,28 +182,10 @@ export const Register = () => {
                     type="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    placeholder="student@college.edu"
+                    placeholder={formData.role === 'admin' ? 'admin@college.edu' : 'student@college.edu'}
                     className="pl-10"
                     required
                   />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="role" className="text-sm font-medium">
-                  Role
-                </Label>
-                <div className="relative">
-                  <UserCheck className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
-                  <Select onValueChange={handleRoleChange} required>
-                    <SelectTrigger className="pl-10">
-                      <SelectValue placeholder="Select your role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="student">Student</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
 
